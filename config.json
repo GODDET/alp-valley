@@ -12,7 +12,10 @@
       "connexionError": "Impossible de se connecter à la base de données",
       "createSuccess": "La base de données '{element}' a été créée.",
       "importSuccess": "L'import de la données s'est bien déroulé",
-      "importError": "Erreur cURL {element}"
+      "importError": "Erreur cURL {element}",
+      "connexionPsqlError": "Impossible de se connecter à la base de données Psql {element}",
+      "checkPsqlSuccess": "La base de données Psql '{element}' existe.",
+      "checkPsqlError": "La base de données Psql '{element}' n'existe pas."
     },
     "logFile": {
       "checkSuccess": "Le répertoire '{element}' existe.",
@@ -24,13 +27,14 @@
   },
   "query": {
     "databaseList": "SHOW DATABASES",
-    "databaseCreate": "CREATE DATABASE \"{element}\";"
+    "databaseCreate": "CREATE DATABASE \"{element}\";",
+    "databaeWA": "SELECT em_user.*,em_ai.answer,eu.optin_requested_at from public.eic_message em_user LEFT JOIN (SELECT previous_entry_id,eic_message.message answer FROM public.eic_message WHERE role='ai') em_ai ON em_ai.previous_entry_id = em_user.id JOIN public.eic_user eu ON eu.id = em_user.user_id WHERE role='user'"
   },
   "postgreSQL": {
-    "host": "localhost",
-    "login": "",
-    "password": "",
-    "port": 8086,
+    "host": "127.0.0.1",
+    "user": "alpvalley",
+    "password": "alpvalley73!",
+    "port": 5432,
     "databaseName": "alpvalley"
   },
   "logFile": {

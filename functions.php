@@ -2,7 +2,9 @@
 
 function displayMessage($message, $element = null)
 {
-    $message = str_replace("{element}", $element, $message);
+    if (!is_null($element)) {
+        $message = str_replace("{element}", $element, $message);
+    }
     echo $message . "\n";
 }
 function initUrl($host, $port, $database, $query)
@@ -13,6 +15,11 @@ function initUrl($host, $port, $database, $query)
 function initWriteUrl($host, $port, $database)
 {
     return "http://$host:$port/write?db=$database";
+}
+
+function initDsn($host, $port, $database, $user, $password)
+{
+    return "pgsql:host=$host;port=$port;dbname=$database;user=$user;password=$password";
 }
 
 function executeQuery($url)
@@ -56,7 +63,7 @@ function executePostQuery($url, $data, $config)
     } else {
         displayMessage($config['translations']['database']['importSuccess']);
     }
-    echo $response;
+
     // Fermer la session cURL
     curl_close($ch);
 }
@@ -87,7 +94,7 @@ function isDatabaseExists($databaseName, $response)
     return $databaseFound;
 }
 
-function importFile($filename, $tableName, $url, $config)
+function importFromFile($filename, $tableName, $url, $config)
 {
     if (($handle = fopen($filename, "r")) !== FALSE) {
 
@@ -128,8 +135,9 @@ function importFile($filename, $tableName, $url, $config)
             $values["npc"] = splitField($fields[11]);
 
             foreach ($values as $key => $value) {
-
-                $value = str_replace("\"", "\\\"", $value);
+                if (!is_null($value)) {
+                    $value = str_replace("\"", "\\\"", $value);
+                }
                 $data .= $key . "=\"" . $value . "\",";
             }
             $data .= "origin=\"LOG\" " . $timestamp;
@@ -148,4 +156,68 @@ function splitField($field)
     $aField = explode("=", trim($field));
     array_shift($aField);
     return implode("=", $aField);
+}
+
+function importFromPsql($dsn, $tableName, $url, $config)
+{
+    try {
+        $pdo = new PDO($dsn);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $sql = $config["query"]["databaeWA"];
+        $stmt = $pdo->query($sql);
+
+
+        // Récupération des résultats et affichage
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $data = "$tableName ";
+            $aDate = explode(".", $row["created_at"]);
+            $timestamp = strtotime($aDate[0]) * 1000 * 1000 * 1000;
+            $aDateNano = explode("+", $aDate[1]);
+            $timestamp += ($aDateNano[0] ?? 1000000);
+            $values = [];
+            $values["user_id"] = $row["user_id"];
+            $values["original_language"] = "";
+            $values["language"] = "";
+            $values["question"] = $row["message"];
+            $values["answer"] = $row["answer"];
+            $values["insult"] = $row["insulting"];
+            $values["manipulate"] = $row["bad_behavior"];
+            $values["optin_requested_at"] = $row["optin_requested_at"];
+            $values["return_code"] = "";
+            $values["return_text"] = "";
+            $values["reviewed_ok_at"] = $row["reviewed_ok_at"];
+            $values["reviewed_ko_at"] = $row["reviewed_ko_at"];
+            $values["dev"] = "";
+            $values["npc"] = "";
+
+            foreach ($values as $key => $value) {
+                if (!is_null($value)) {
+                    $value = str_replace("\"", "\\\"", $value);
+                }
+                $data .= $key . "=\"" . $value . "\",";
+            }
+            $data .= "origin=\"WA\" " . $timestamp;
+            displayMessage($data);
+            //executePostQuery($url, $data, $config);
+            //break;
+        }
+
+    } catch (PDOException $e) {
+        // En cas d'erreur, afficher le message d'erreur
+        displayMessage($config['translations']['database']['connexionPsqlError'], $config["postgreSQL"]["databaseName"]);
+    }
+
+    // Fermeture de la connexion
+    $pdo = null;
+}
+
+function checkPsql($dsn)
+{
+    try {
+        $pdo = new PDO($dsn);
+    } catch (PDOException $e) {
+        return false;
+    }
+    return true;
 }

@@ -14,6 +14,7 @@ $date = $_GET['date'] ?? date("Y-m-d", strtotime("yesterday"));
 
 switch ($mode) {
     case 'check':
+
         //Check if the influxDB database exists
         $query = $config['query']['databaseList'];
         $url = initUrl($config["host"], $config["port"], $config["databaseName"], $query);
@@ -33,7 +34,12 @@ switch ($mode) {
         }
 
         //Check if the Psql database exists
-
+        $dsn = initDsn($config["postgreSQL"]["host"], $config["postgreSQL"]["port"], $config["postgreSQL"]["databaseName"], $config["postgreSQL"]["user"], $config["postgreSQL"]["password"]);
+        if (checkPsql($dsn)) {
+            displayMessage($config['translations']['database']['checkPsqlSuccess'], $config["postgreSQL"]["databaseName"]);
+        } else {
+            displayMessage($config['translations']['database']['checkPsqlError'], $config["postgreSQL"]["databaseName"]);
+        }
         break;
 
     case 'init':
@@ -60,7 +66,8 @@ switch ($mode) {
         break;
 
     case 'import':
-        //Traitement du fichier de log
+        //Traitement via le fichier de log
+        /*
         $logFiles = scandir($config["logFile"]["path"]);
         $fileName = $config["logFile"]["pattern"];
         $fileName = str_replace("{date}", $date, $fileName);
@@ -70,46 +77,19 @@ switch ($mode) {
             if ($file == $fileName) {
                 $fileFound = true;
                 displayMessage($config['translations']['logFile']['findSuccess'], $fileName);
-                importFile($config["logFile"]["path"] . "/" . $fileName, "data", $url, $config);
+                importFromFile($config["logFile"]["path"] . "/" . $fileName, "data", $url, $config);
             }
         }
         if (!$fileFound) {
             displayMessage($config['translations']['logFile']['findError'], $fileName);
         }
+        */
+
+        //Traitement via la base de données
+        $url = initWriteUrl($config["host"], $config["port"], $config["databaseName"]);
+        $dsn = initDsn($config["postgreSQL"]["host"], $config["postgreSQL"]["port"], $config["postgreSQL"]["databaseName"], $config["postgreSQL"]["user"], $config["postgreSQL"]["password"]);
+        importFromPsql($dsn, "data", $url, $config);
         break;
-
-    case 'reset':
-        // Paramètres de connexion à InfluxDB
-        $influxDbHost = "http://localhost:8086"; // Adresse du serveur InfluxDB
-        $database = "alpvalley"; // Nom de la base de données
-
-        // Requête InfluxDB pour supprimer les données
-        // Supprime toutes les données de la mesure "my_measurement" dans un intervalle de temps
-        $deleteQuery = "DROP MEASUREMENT data";
-
-        // Créer l'URL complète pour exécuter une requête
-        $url = "$influxDbHost/query?db=$database";
-
-        // Initialiser la requête cURL
-        $ch = curl_init($url);
-
-        // Configurer les options cURL
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['q' => $deleteQuery]));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        // Exécuter la requête et récupérer la réponse
-        $response = curl_exec($ch);
-
-        // Gérer les erreurs
-        if (curl_errno($ch)) {
-            echo 'Erreur cURL : ' . curl_error($ch);
-        } else {
-            echo "Requête de suppression exécutée avec succès. Réponse InfluxDB : " . $response;
-        }
-
-        // Fermer la session cURL
-        curl_close($ch);
 
     default:
         displayMessage($config['translations']['error']['unknwonMode']);
