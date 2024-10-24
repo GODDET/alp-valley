@@ -1,0 +1,40 @@
+{
+  "host": "localhost",
+  "port": 8086,
+  "databaseName": "alpvalley",
+  "translations": {
+    "error": {
+      "unknwonMode": "Mode inconnu"
+    },
+    "database": {
+      "checkSuccess": "La base de données '{element}' existe.",
+      "checkError": "La base de données '{element}' n'existe pas.",
+      "connexionError": "Impossible de se connecter à la base de données",
+      "createSuccess": "La base de données '{element}' a été créée.",
+      "importSuccess": "L'import de la données s'est bien déroulé",
+      "importError": "Erreur cURL {element}"
+    },
+    "logFile": {
+      "checkSuccess": "Le répertoire '{element}' existe.",
+      "checkError": "Le répertoire '{element}' n'existe pas.",
+      "createSuccess": "Le répertoire '{element}' a été créé.",
+      "findSuccess": "Le fichier {element} a été trouvé.",
+      "findError": "Le fichier {element} n'a pas été trouvé."
+    }
+  },
+  "query": {
+    "databaseList": "SHOW DATABASES",
+    "databaseCreate": "CREATE DATABASE \"{element}\";"
+  },
+  "postgreSQL": {
+    "host": "localhost",
+    "login": "",
+    "password": "",
+    "port": 8086,
+    "databaseName": "alpvalley"
+  },
+  "logFile": {
+    "path": "/home/gwen/logs",
+    "pattern": "EIC - log.{date}"
+  }
+}
